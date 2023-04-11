@@ -386,7 +386,7 @@ int main(int argc, char** argv)
 	double* samples = malloc(sizeof(double) * numIterations);
 	for(int i = 0; i < numIterations; ++i)
 	{
-		samples[i] = lm_get() / (double)0xffffffffffffffff;
+		samples[i] = lm_get() / (double)0xffffffffffffffffull;
 	}
 	
 	if(jpgfilename == NULL)
