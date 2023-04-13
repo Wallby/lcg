@@ -74,7 +74,7 @@ int my_on_argument_parsed(char* argument)
 {
 	if(strcmp("usage", argument) == 0)
 	{
-		bUsage = 1;
+		bUsage = 1; //< duplicate argument not allowed by arguments-mini thus this works
 	}
 	else
 	{
@@ -87,7 +87,7 @@ int my_on_argument_parsed(char* argument)
 				return 0;
 			}
 			
-			jpgfilename = argument;
+			jpgfilename = argument; //< works as argument is pointer into argv
 		}
 		else
 		{
@@ -349,9 +349,10 @@ int main(int argc, char** argv)
 		return 1;
 	}
 	
+	int seed;
 	if(bUseCustomSeed == 1)
 	{
-		lm_set_seed(customSeed);
+		seed = customSeed;
 	}
 	else
 	{
@@ -362,7 +363,7 @@ int main(int argc, char** argv)
 		GetSystemTimeAsFileTime(&c);
 		ULARGE_INTEGER d = { .u.LowPart = c.dwLowDateTime, .u.HighPart = c.dwHighDateTime };
 		// ^
-		// (d)100nanoseconds
+		// (d.QuadPart)100nanoseconds
 		// ^
 		// https://learn.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-filetime
 		b = d.QuadPart * 100ull;
@@ -376,8 +377,11 @@ int main(int argc, char** argv)
 		//  https://man7.org/linux/man-pages/man0/sys_time.h.0p.html
 #endif
 
-		lm_set_seed(b);
+		seed = b;
 	}
+	
+	int myGenerator;
+	lm_add_generator(seed, &myGenerator);
 	
 	//double samples[numIterations];
 	// ^
@@ -386,8 +390,12 @@ int main(int argc, char** argv)
 	double* samples = malloc(sizeof(double) * numIterations);
 	for(int i = 0; i < numIterations; ++i)
 	{
-		samples[i] = lm_get() / (double)0xffffffffffffffffull;
+		uint64_t b;
+		lm_generate_next(myGenerator, &b);
+		samples[i] = b / (double)0xffffffffffffffffull;
 	}
+	
+	lm_remove_generator(myGenerator);
 	
 	if(jpgfilename == NULL)
 	{

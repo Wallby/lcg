@@ -1,6 +1,8 @@
 ifndef OS # linux
+LIBRARY_EXTENSION=.a
 EXECUTABLE_EXTENSIONS=
 else ifeq ($(OS), Windows_NT) # windows
+LIBRARY_EXTENSION=.lib
 EXECUTABLE_EXTENSION=.exe
 else
 $(error OS not supported)
@@ -17,9 +19,17 @@ endif
 #       ^
 #       https://libjpeg-turbo.org/Documentation/OfficialBinaries
 #       https://github.com/libjpeg-turbo/libjpeg-turbo/issues/686
-I:=../arguments-mini/ ../lcg-mini/ C:/libjpeg-turbo-gcc[64]/include/
-L:=../arguments-mini/ ../lcg-mini/ C:/libjpeg-turbo-gcc[64]/lib/
-l:=arguments-mini lcg-mini turbojpeg
+I:=C:/libjpeg-turbo-gcc[64]/include/
+L:=C:/libjpeg-turbo-gcc[64]/lib/
+l:=turbojpeg
+
+LIBRARIES:=../arguments-mini/libarguments-mini$(LIBRARY_EXTENSION) ../lcg-mini/liblcg-mini$(LIBRARY_EXTENSION)
+
+#******************************************************************************
+
+I+= $(dir $(LIBRARIES))
+L+= $(dir $(LIBRARIES))
+l+= $(patsubst lib%$(LIBRARY_EXTENSION),%,$(notdir $(LIBRARIES)))
 
 # TODO: ifndef OS # linux
 #       lcg.AppImage: lcg
@@ -28,7 +38,7 @@ l:=arguments-mini lcg-mini turbojpeg
 lcg$(EXECUTABLE_EXTENSION): main.o
 	gcc -o $@ $^ $(addprefix -L,$(L)) $(addprefix -l,$(l))
 
-main.o: main.c
+main.o: main.c $(LIBRARIES)
 	gcc -c $< $(addprefix -I,$(I))
 
 clean:
